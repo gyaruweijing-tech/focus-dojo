@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="#15803d"/>
+
+  <!-- Pagoda roof (peak → base edges → beam corners) -->
+  <path d="M256 118 L88 212 L112 238 L400 238 L424 212 Z"
+        fill="none" stroke="white" stroke-width="20"
+        stroke-linejoin="round" stroke-linecap="round"/>
+
+  <!-- Left pillar -->
+  <line x1="152" y1="238" x2="152" y2="398"
+        stroke="white" stroke-width="20" stroke-linecap="round"/>
+  <!-- Right pillar -->
+  <line x1="360" y1="238" x2="360" y2="398"
+        stroke="white" stroke-width="20" stroke-linecap="round"/>
+  <!-- Floor beam -->
+  <line x1="112" y1="398" x2="400" y2="398"
+        stroke="white" stroke-width="20" stroke-linecap="round"/>
+
+  <!-- Stopwatch body -->
+  <circle cx="256" cy="318" r="68"
+          fill="none" stroke="white" stroke-width="18"/>
+
+  <!-- Stopwatch crown / stem -->
+  <rect x="238" y="236" width="36" height="16" rx="8" fill="white"/>
+
+  <!-- Clock hands -->
+  <line x1="256" y1="318" x2="256" y2="276"
+        stroke="white" stroke-width="14" stroke-linecap="round"/>
+  <line x1="256" y1="318" x2="290" y2="318"
+        stroke="white" stroke-width="14" stroke-linecap="round"/>
+</svg>

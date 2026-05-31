@@ -22,6 +22,8 @@ export default function TaskInput({
   onNameChange,
   onEstimateChange,
 }: TaskInputProps) {
+  const remaining = Math.max(0, estimatedPomodoros - actualPomodoros);
+
   return (
     <div className="px-6 space-y-3">
       <input
@@ -34,39 +36,49 @@ export default function TaskInput({
       />
 
       {/* Session goal */}
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         <div className="flex items-center justify-between">
           <span className="text-white/70 text-xs font-medium">
-            {lang === "ja" ? "目標セッション数（何回やる？）" : "Session goal (how many rounds?)"}
+            {lang === "ja" ? "目標セッション数" : "Session goal"}
           </span>
           {actualPomodoros > 0 && (
-            <span className="text-white/50 text-xs">
-              {lang === "ja" ? `実績 ${actualPomodoros}回` : `Done: ${actualPomodoros}`}
+            <span className="text-white text-xs font-semibold">
+              {lang === "ja"
+                ? `${estimatedPomodoros}回中 ${actualPomodoros}回完了 — あと${remaining}回`
+                : `${actualPomodoros}/${estimatedPomodoros} done — ${remaining} left`}
             </span>
           )}
         </div>
-        {/* Dot selector */}
+
+        {/* Progress dots */}
         <div className="flex gap-2 items-center">
-          {[1, 2, 3, 4, 5, 6].map((n) => (
-            <button
-              key={n}
-              onClick={() => onEstimateChange(n)}
-              disabled={disabled}
-              aria-label={`${n} sessions`}
-              className="flex flex-col items-center gap-1 group disabled:opacity-50 transition-all"
-            >
-              <span
-                className={`w-4 h-4 rounded-full border-2 transition-all ${
-                  n <= estimatedPomodoros
-                    ? "bg-white border-white"
-                    : "bg-transparent border-white/30 group-hover:border-white/60"
-                }`}
-              />
-              {n === estimatedPomodoros && (
-                <span className="text-white text-xs font-bold leading-none">{n}</span>
-              )}
-            </button>
-          ))}
+          {[1, 2, 3, 4, 5, 6].map((n) => {
+            const isCompleted = n <= actualPomodoros;
+            const isGoal = n === estimatedPomodoros;
+            const isSelected = n <= estimatedPomodoros && !isCompleted;
+            return (
+              <button
+                key={n}
+                onClick={() => onEstimateChange(n)}
+                disabled={disabled}
+                aria-label={`${n} sessions`}
+                className="flex flex-col items-center gap-1 group disabled:opacity-50 transition-all"
+              >
+                <span
+                  className={`w-5 h-5 rounded-full border-2 transition-all ${
+                    isCompleted
+                      ? "bg-white border-white scale-110"
+                      : isSelected
+                      ? "bg-white/30 border-white"
+                      : "bg-transparent border-white/25 group-hover:border-white/50"
+                  }`}
+                />
+                {isGoal && (
+                  <span className="text-white/60 text-xs leading-none">{n}</span>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>

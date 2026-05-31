@@ -34,12 +34,12 @@ export default function StatsTab({ storage }: StatsTabProps) {
         <div className="bg-white/10 rounded-2xl p-4 text-center">
           <div className="text-white/50 text-xs mb-1">{t(lang, "today")}</div>
           <div className="text-4xl font-bold">{today.pomodoros}</div>
-          <div className="text-white/40 text-xs mt-1">🍅</div>
+          <div className="text-white/40 text-xs mt-1">{lang === "ja" ? "回" : "sessions"}</div>
         </div>
         <div className="bg-white/10 rounded-2xl p-4 text-center">
           <div className="text-white/50 text-xs mb-1">{t(lang, "yesterday")}</div>
           <div className="text-4xl font-bold">{yesterday.pomodoros}</div>
-          <div className="text-white/40 text-xs mt-1">🍅</div>
+          <div className="text-white/40 text-xs mt-1">{lang === "ja" ? "回" : "sessions"}</div>
         </div>
       </div>
 
@@ -49,7 +49,7 @@ export default function StatsTab({ storage }: StatsTabProps) {
         <div className={`text-lg font-bold ${raceColor}`}>{raceLabel}</div>
         <div className="mt-2 h-2 bg-white/10 rounded-full overflow-hidden">
           <div
-            className="h-full bg-orange-400 rounded-full transition-all"
+            className="h-full bg-green-400 rounded-full transition-all"
             style={{ width: `${yesterday.pomodoros > 0 ? Math.min(100, (today.pomodoros / yesterday.pomodoros) * 100) : today.pomodoros > 0 ? 100 : 0}%` }}
           />
         </div>
@@ -63,7 +63,7 @@ export default function StatsTab({ storage }: StatsTabProps) {
             <div key={d.date} className="flex-1 flex flex-col items-center gap-1">
               <div className="w-full flex flex-col justify-end" style={{ height: "72px" }}>
                 <div
-                  className="w-full bg-orange-400 rounded-t-sm transition-all"
+                  className="w-full bg-green-400 rounded-t-sm transition-all"
                   style={{ height: `${(d.pomodoros / maxWeek) * 72}px`, minHeight: d.pomodoros > 0 ? "4px" : "0" }}
                 />
               </div>
@@ -82,7 +82,8 @@ export default function StatsTab({ storage }: StatsTabProps) {
               <div key={i} className="flex items-center justify-between">
                 <span className="text-sm text-white/80 flex-1 truncate mr-3">{task.name || t(lang, "noTasks")}</span>
                 <span className="text-xs text-white/50 flex-shrink-0">
-                  {task.estimatedPomodoros} → {task.actualPomodoros} 🍅
+                  {task.estimatedPomodoros} → {task.actualPomodoros}
+                  <span className="ml-1 text-white/30">{lang === "ja" ? "回" : "×"}</span>
                 </span>
               </div>
             ))}
@@ -90,7 +91,6 @@ export default function StatsTab({ storage }: StatsTabProps) {
         </div>
       )}
 
-      {/* Current task (if set) */}
       {currentTask.name && today.tasks.length === 0 && (
         <div className="text-white/30 text-sm text-center py-4">{t(lang, "noTasks")}</div>
       )}

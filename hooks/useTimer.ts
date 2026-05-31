@@ -16,11 +16,13 @@ export interface UseTimerReturn {
   totalSeconds: number;
   isRunning: boolean;
   completedPomodoros: number;
+  pendingBreak: boolean;
   start: () => void;
   pause: () => void;
   reset: () => void;
-  skip: () => void;
   extend: (minutes: number) => void;
+  confirmBreak: () => void;
+  extendWorkFromCompletion: (minutes: number) => void;
 }
 
 function getDuration(mode: TimerMode, config: TimerConfig): number {
@@ -42,6 +44,7 @@ export function useTimer(
   const [timeLeft, setTimeLeft] = useState(config.workDuration * 60);
   const [isRunning, setIsRunning] = useState(false);
   const [completedPomodoros, setCompletedPomodoros] = useState(0);
+  const [pendingBreak, setPendingBreak] = useState(false);
 
   const modeRef = useRef<TimerMode>("work");
   const startTimeRef = useRef<number | null>(null);
@@ -61,39 +64,47 @@ export function useTimer(
     }
   }, []);
 
-  const advance = useCallback((completedMode: TimerMode) => {
-    const newCount = completedMode === "work" ? completedRef.current + 1 : completedRef.current;
-    completedRef.current = newCount;
-
-    const nm = nextMode(completedMode, newCount, configRef.current.longBreakInterval);
-    const duration = getDuration(nm, configRef.current);
-
-    modeRef.current = nm;
-    remainingRef.current = duration;
-    setMode(nm);
-    setTimeLeft(duration);
-    setCompletedPomodoros(newCount);
-    onCompleteRef.current(completedMode, newCount);
-  }, []);
-
-  const tick = useCallback(() => {
-    if (startTimeRef.current === null) return;
-    const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
-    const remaining = Math.max(0, remainingRef.current - elapsed);
-    setTimeLeft(remaining);
-    if (remaining === 0) {
-      clearTimer();
-      setIsRunning(false);
-      startTimeRef.current = null;
-      advance(modeRef.current);
-    }
-  }, [clearTimer, advance]);
-
-  const start = useCallback(() => {
+  const startInternal = useCallback(() => {
     startTimeRef.current = Date.now();
     setIsRunning(true);
-    intervalRef.current = setInterval(tick, 500);
-  }, [tick]);
+    intervalRef.current = setInterval(() => {
+      if (startTimeRef.current === null) return;
+      const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
+      const remaining = Math.max(0, remainingRef.current - elapsed);
+      setTimeLeft(remaining);
+      if (remaining === 0) {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+        setIsRunning(false);
+        startTimeRef.current = null;
+        // capture mode before advance changes it
+        const currentMode = modeRef.current;
+        const newCount = currentMode === "work" ? completedRef.current + 1 : completedRef.current;
+        completedRef.current = newCount;
+        setCompletedPomodoros(newCount);
+        onCompleteRef.current(currentMode, newCount);
+
+        if (currentMode === "work") {
+          // Show break choice to user
+          setPendingBreak(true);
+        } else {
+          // Break/longBreak done → silently advance to work, don't auto-start
+          const nm = nextMode(currentMode, newCount, configRef.current.longBreakInterval);
+          const duration = getDuration(nm, configRef.current);
+          modeRef.current = nm;
+          remainingRef.current = duration;
+          setMode(nm);
+          setTimeLeft(duration);
+        }
+      }
+    }, 500);
+  }, []);
+
+  const start = useCallback(() => {
+    startInternal();
+  }, [startInternal]);
 
   const pause = useCallback(() => {
     if (startTimeRef.current !== null) {
@@ -109,18 +120,12 @@ export function useTimer(
   const reset = useCallback(() => {
     clearTimer();
     setIsRunning(false);
+    setPendingBreak(false);
     startTimeRef.current = null;
     const duration = getDuration(modeRef.current, configRef.current);
     remainingRef.current = duration;
     setTimeLeft(duration);
   }, [clearTimer]);
-
-  const skip = useCallback(() => {
-    clearTimer();
-    setIsRunning(false);
-    startTimeRef.current = null;
-    advance(modeRef.current);
-  }, [clearTimer, advance]);
 
   const extend = useCallback((minutes: number) => {
     const extra = minutes * 60;
@@ -135,9 +140,29 @@ export function useTimer(
     setTimeLeft((prev) => prev + extra);
   }, []);
 
+  const confirmBreak = useCallback(() => {
+    setPendingBreak(false);
+    const nm = nextMode("work", completedRef.current, configRef.current.longBreakInterval);
+    const duration = getDuration(nm, configRef.current);
+    modeRef.current = nm;
+    remainingRef.current = duration;
+    setMode(nm);
+    setTimeLeft(duration);
+    startInternal();
+  }, [startInternal]);
+
+  const extendWorkFromCompletion = useCallback((minutes: number) => {
+    setPendingBreak(false);
+    const extra = minutes * 60;
+    remainingRef.current = extra;
+    setTimeLeft(extra);
+    // modeRef stays "work"
+    startInternal();
+  }, [startInternal]);
+
   // Sync duration when config changes (only when idle)
   useEffect(() => {
-    if (!isRunning && startTimeRef.current === null) {
+    if (!isRunning && startTimeRef.current === null && !pendingBreak) {
       const duration = getDuration(modeRef.current, config);
       remainingRef.current = duration;
       setTimeLeft(duration);
@@ -153,10 +178,12 @@ export function useTimer(
     totalSeconds: getDuration(mode, config),
     isRunning,
     completedPomodoros,
+    pendingBreak,
     start,
     pause,
     reset,
-    skip,
     extend,
+    confirmBreak,
+    extendWorkFromCompletion,
   };
 }

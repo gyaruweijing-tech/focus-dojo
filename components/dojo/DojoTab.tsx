@@ -34,13 +34,13 @@ export default function DojoTab({ storage }: DojoTabProps) {
           <span>{t(lang, "exp")}: {expProgress}%</span>
           {next && (
             <span>
-              {t(lang, "nextLevel")}: {next.minPomodoros - totalPomodoros} 🍅
+              {t(lang, "nextLevel")}: {next.minPomodoros - totalPomodoros}
             </span>
           )}
         </div>
         <div className="h-3 bg-white/10 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-orange-400 to-yellow-300 rounded-full transition-all duration-500"
+            className="h-full bg-gradient-to-r from-green-400 to-emerald-300 rounded-full transition-all duration-500"
             style={{ width: `${expProgress}%` }}
           />
         </div>
@@ -78,7 +78,7 @@ export default function DojoTab({ storage }: DojoTabProps) {
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-sm">{unlocked ? "🏆" : "🔒"}</span>
+                  <span className={`text-sm font-bold ${unlocked ? "text-yellow-300" : "text-white/30"}`}>{unlocked ? "★" : "○"}</span>
                   <span className={`text-sm font-medium ${isCurrent ? "text-yellow-300" : "text-white/80"}`}>
                     {displayTitle}
                   </span>

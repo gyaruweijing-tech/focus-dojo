@@ -1,21 +1,26 @@
-{
+﻿{
   "name": "フォーカス道場",
-  "short_name": "道場",
+  "short_name": "Focus Dojo",
   "description": "集中力を鍛える本格ポモドーロタイマー",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1c1917",
-  "theme_color": "#f97316",
-  "orientation": "portrait",
+  "background_color": "#15803d",
+  "theme_color": "#16a34a",
   "icons": [
     {
-      "src": "/icons/icon-192.png",
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "/icon-512",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

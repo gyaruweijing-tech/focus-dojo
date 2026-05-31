@@ -9,7 +9,6 @@ export interface Settings {
   sound: boolean;
   notification: boolean;
   language: Language;
-  stealthMode: boolean;
 }
 
 export interface Task {

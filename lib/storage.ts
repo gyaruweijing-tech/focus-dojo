@@ -8,7 +8,6 @@ export const DEFAULT_SETTINGS: Settings = {
   sound: true,
   notification: true,
   language: "ja",
-  stealthMode: false,
 };
 
 const DEFAULT_TASK: Task = {

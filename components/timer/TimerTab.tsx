@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { Eye, EyeOff, Maximize, Minimize } from "lucide-react";
+import { useEffect, useCallback } from "react";
 import TimerDisplay from "./TimerDisplay";
 import TimerControls from "./TimerControls";
 import TaskInput from "./TaskInput";
-import FullscreenModal from "./FullscreenModal";
 import { useTimer } from "@/hooks/useTimer";
 import { useNotification } from "@/hooks/useNotification";
 import { recordPomodoro } from "@/lib/storage";
@@ -24,10 +22,6 @@ export default function TimerTab({ storage, onModeChange }: TimerTabProps) {
   const { settings, currentTask, sessions, gamification } = data;
   const lang = settings.language;
 
-  const [stealthMode, setStealthMode] = useState(settings.stealthMode);
-  const [fullscreenLock, setFullscreenLock] = useState(false);
-  const [showFullscreenModal, setShowFullscreenModal] = useState(false);
-
   const { requestPermission, sendNotification, playSound } = useNotification();
 
   const handleComplete = useCallback(
@@ -40,6 +34,7 @@ export default function TimerTab({ storage, onModeChange }: TimerTabProps) {
       if (completedMode === "work") {
         const newSessions = recordPomodoro(sessions, currentTask);
         addSession(newSessions);
+        updateTask({ actualPomodoros: currentTask.actualPomodoros + 1 });
         const newTotal = gamification.totalPomodoros + 1;
         const levelInfo = getLevelInfo(newTotal);
         const unlocked = getUnlockedTitles(newTotal);
@@ -52,7 +47,7 @@ export default function TimerTab({ storage, onModeChange }: TimerTabProps) {
       }
       void newCount;
     },
-    [settings, lang, sessions, currentTask, gamification, playSound, sendNotification, addSession, updateGamification]
+    [settings, lang, sessions, currentTask, gamification, playSound, sendNotification, addSession, updateTask, updateGamification]
   );
 
   const timer = useTimer(
@@ -69,30 +64,6 @@ export default function TimerTab({ storage, onModeChange }: TimerTabProps) {
     onModeChange(timer.mode);
   }, [timer.mode, onModeChange]);
 
-  const enableFullscreen = useCallback(async () => {
-    try {
-      await document.documentElement.requestFullscreen();
-    } catch {
-      // Fullscreen API not available (iOS etc.)
-    }
-    setFullscreenLock(true);
-  }, []);
-
-  const disableFullscreen = useCallback(() => {
-    setFullscreenLock(false);
-    setShowFullscreenModal(false);
-    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    if (!fullscreenLock) return;
-    const onVisChange = () => {
-      if (document.hidden) setShowFullscreenModal(true);
-    };
-    document.addEventListener("visibilitychange", onVisChange);
-    return () => document.removeEventListener("visibilitychange", onVisChange);
-  }, [fullscreenLock]);
-
   const modeLabel =
     timer.mode === "work" ? t(lang, "work") : timer.mode === "break" ? t(lang, "break") : t(lang, "longBreak");
 
@@ -100,12 +71,6 @@ export default function TimerTab({ storage, onModeChange }: TimerTabProps) {
     requestPermission();
     timer.start();
   }, [requestPermission, timer]);
-
-  const toggleStealth = useCallback(() => {
-    const next = !stealthMode;
-    setStealthMode(next);
-    updateSettings({ stealthMode: next });
-  }, [stealthMode, updateSettings]);
 
   return (
     <div className="flex flex-col min-h-full pt-4 pb-2">
@@ -116,7 +81,7 @@ export default function TimerTab({ storage, onModeChange }: TimerTabProps) {
         </span>
         <div className="flex items-center gap-3">
           <span className="text-white/50 text-xs tabular-nums">
-            {timer.completedPomodoros} / {currentTask.estimatedPomodoros}
+            {currentTask.actualPomodoros} / {currentTask.estimatedPomodoros}
           </span>
           <button
             onClick={() => updateSettings({ language: lang === "ja" ? "en" : "ja" })}
@@ -127,11 +92,10 @@ export default function TimerTab({ storage, onModeChange }: TimerTabProps) {
         </div>
       </div>
 
-      {/* Timer ring + stealth bar */}
+      {/* Timer ring */}
       <TimerDisplay
         timeLeft={timer.timeLeft}
         totalSeconds={timer.totalSeconds}
-        stealthMode={stealthMode}
       />
 
       {/* Task input */}
@@ -140,53 +104,46 @@ export default function TimerTab({ storage, onModeChange }: TimerTabProps) {
         estimatedPomodoros={currentTask.estimatedPomodoros}
         actualPomodoros={currentTask.actualPomodoros}
         lang={lang}
-        disabled={timer.isRunning}
-        onNameChange={(name) => updateTask({ name })}
+        disabled={timer.isRunning || timer.pendingBreak}
+        onNameChange={(name) => updateTask({ name, actualPomodoros: 0 })}
         onEstimateChange={(n) => updateTask({ estimatedPomodoros: n })}
       />
 
-      {/* Controls */}
-      <div className="mt-6">
-        <TimerControls
-          isRunning={timer.isRunning}
-          mode={timer.mode}
-          lang={lang}
-          onStart={handleStart}
-          onPause={timer.pause}
-          onReset={timer.reset}
-          onSkip={timer.skip}
-          onExtend={timer.extend}
-        />
-      </div>
-
-      {/* Mode toggles */}
-      <div className="flex justify-center gap-3 mt-5 px-6">
-        <button
-          onClick={toggleStealth}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-            stealthMode ? "bg-white/30 text-white" : "bg-white/10 text-white/50 hover:bg-white/20"
-          }`}
-        >
-          {stealthMode ? <EyeOff size={13} /> : <Eye size={13} />}
-          {t(lang, "stealth")}
-        </button>
-        <button
-          onClick={fullscreenLock ? disableFullscreen : enableFullscreen}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-            fullscreenLock ? "bg-white/30 text-white" : "bg-white/10 text-white/50 hover:bg-white/20"
-          }`}
-        >
-          {fullscreenLock ? <Minimize size={13} /> : <Maximize size={13} />}
-          {t(lang, "fullscreen")}
-        </button>
-      </div>
-
-      {showFullscreenModal && (
-        <FullscreenModal
-          lang={lang}
-          onLeave={disableFullscreen}
-          onStay={() => setShowFullscreenModal(false)}
-        />
+      {/* Controls or break choice */}
+      {timer.pendingBreak ? (
+        <div className="mt-6 px-6">
+          <div className="bg-white/15 rounded-2xl p-5 text-center space-y-4">
+            <p className="text-white font-bold text-lg">
+              {lang === "ja" ? "セッション完了！" : "Session done!"}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={timer.confirmBreak}
+                className="flex-1 py-3 rounded-xl bg-white text-green-700 font-bold text-sm shadow-md hover:scale-105 transition-all active:scale-95"
+              >
+                {lang === "ja" ? "休憩を始める" : "Start Break"}
+              </button>
+              <button
+                onClick={() => timer.extendWorkFromCompletion(5)}
+                className="flex-1 py-3 rounded-xl bg-white/20 text-white font-semibold text-sm hover:bg-white/30 transition-all active:scale-95"
+              >
+                {lang === "ja" ? "+5分 続ける" : "+5 min more"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-6">
+          <TimerControls
+            isRunning={timer.isRunning}
+            mode={timer.mode}
+            lang={lang}
+            onStart={handleStart}
+            onPause={timer.pause}
+            onReset={timer.reset}
+            onExtend={timer.extend}
+          />
+        </div>
       )}
     </div>
   );

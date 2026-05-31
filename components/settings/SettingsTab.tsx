@@ -17,7 +17,7 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
   return (
     <button
       onClick={() => onChange(!value)}
-      className={`relative w-12 h-6 rounded-full transition-all ${value ? "bg-orange-400" : "bg-white/20"}`}
+      className={`relative w-12 h-6 rounded-full transition-all ${value ? "bg-green-500" : "bg-white/20"}`}
     >
       <span
         className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${
@@ -75,7 +75,7 @@ export default function SettingsTab({ storage }: SettingsTabProps) {
                 key={l}
                 onClick={() => updateSettings({ language: l })}
                 className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                  settings.language === l ? "bg-white text-orange-500" : "bg-white/10 text-white hover:bg-white/20"
+                  settings.language === l ? "bg-white text-green-700" : "bg-white/10 text-white hover:bg-white/20"
                 }`}
               >
                 {l === "ja" ? "日本語" : "English"}
@@ -105,7 +105,7 @@ export default function SettingsTab({ storage }: SettingsTabProps) {
                   })
                 }
                 className={`flex-1 py-2 rounded-xl text-xs font-medium transition-all ${
-                  active ? "bg-white text-orange-500" : "bg-white/10 text-white hover:bg-white/20"
+                  active ? "bg-white text-green-700" : "bg-white/10 text-white hover:bg-white/20"
                 }`}
               >
                 {p.label}

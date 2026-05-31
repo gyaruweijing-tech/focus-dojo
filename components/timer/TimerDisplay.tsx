@@ -8,7 +8,6 @@ const CIRCUMFERENCE = 2 * Math.PI * R;
 interface TimerDisplayProps {
   timeLeft: number;
   totalSeconds: number;
-  stealthMode: boolean;
 }
 
 function formatTime(seconds: number): string {
@@ -17,14 +16,13 @@ function formatTime(seconds: number): string {
   return `${m}:${s}`;
 }
 
-export default function TimerDisplay({ timeLeft, totalSeconds, stealthMode }: TimerDisplayProps) {
+export default function TimerDisplay({ timeLeft, totalSeconds }: TimerDisplayProps) {
   const progress = totalSeconds > 0 ? timeLeft / totalSeconds : 1;
   const dashOffset = CIRCUMFERENCE * (1 - progress);
 
   return (
     <div className="flex flex-col items-center my-4">
       <svg width="240" height="240" viewBox="0 0 240 240">
-        {/* Background ring */}
         <circle
           cx={CX}
           cy={CY}
@@ -33,7 +31,6 @@ export default function TimerDisplay({ timeLeft, totalSeconds, stealthMode }: Ti
           stroke="rgba(255,255,255,0.15)"
           strokeWidth={12}
         />
-        {/* Progress ring */}
         <circle
           cx={CX}
           cy={CY}
@@ -47,39 +44,18 @@ export default function TimerDisplay({ timeLeft, totalSeconds, stealthMode }: Ti
           className="timer-ring"
           style={{ transition: "stroke-dashoffset 0.5s ease" }}
         />
-        {/* Center content */}
-        {!stealthMode ? (
-          <text
-            x={CX}
-            y={CY + 12}
-            textAnchor="middle"
-            fill="white"
-            fontSize="44"
-            fontWeight="700"
-            fontFamily="var(--font-geist-sans), monospace"
-          >
-            {formatTime(timeLeft)}
-          </text>
-        ) : (
-          /* Stealth: soft pulsing dot */
-          <circle
-            cx={CX}
-            cy={CY}
-            r={6}
-            fill="rgba(255,255,255,0.5)"
-          />
-        )}
+        <text
+          x={CX}
+          y={CY + 12}
+          textAnchor="middle"
+          fill="white"
+          fontSize="44"
+          fontWeight="700"
+          fontFamily="var(--font-geist-sans), monospace"
+        >
+          {formatTime(timeLeft)}
+        </text>
       </svg>
-
-      {/* Stealth mode: horizontal progress bar */}
-      {stealthMode && (
-        <div className="w-48 h-1.5 bg-white/15 rounded-full overflow-hidden -mt-2">
-          <div
-            className="h-full bg-white rounded-full transition-all duration-500 ease-linear"
-            style={{ width: `${progress * 100}%` }}
-          />
-        </div>
-      )}
     </div>
   );
 }
