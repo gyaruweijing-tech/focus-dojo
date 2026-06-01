@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { loadData, saveData } from "@/lib/storage";
+import { loadData, saveData, importData, getDefaultData } from "@/lib/storage";
 import type { AppData, Settings, Task, DayRecord, Gamification } from "@/lib/types";
 
 export interface StorageActions {
@@ -10,10 +10,11 @@ export interface StorageActions {
   updateTask: (task: Partial<Task>) => void;
   addSession: (sessions: DayRecord[]) => void;
   updateGamification: (g: Partial<Gamification>) => void;
+  importAll: (json: string) => void;
 }
 
 export function useStorage(): StorageActions {
-  const [data, setData] = useState<AppData>(loadData);
+  const [data, setData] = useState<AppData>(getDefaultData);
 
   useEffect(() => {
     setData(loadData());
@@ -51,5 +52,10 @@ export function useStorage(): StorageActions {
     });
   }, []);
 
-  return { data, updateSettings, updateTask, addSession, updateGamification };
+  const importAll = useCallback((json: string) => {
+    const merged = importData(json);
+    setData(merged);
+  }, []);
+
+  return { data, updateSettings, updateTask, addSession, updateGamification, importAll };
 }

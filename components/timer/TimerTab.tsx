@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import TimerDisplay from "./TimerDisplay";
 import TimerControls from "./TimerControls";
 import TaskInput from "./TaskInput";
 import { useTimer } from "@/hooks/useTimer";
 import { useNotification } from "@/hooks/useNotification";
 import { recordPomodoro } from "@/lib/storage";
-import { getLevelInfo, getUnlockedTitles } from "@/lib/gamification";
+import { getBeltInfo, BELTS } from "@/lib/gamification";
 import { t } from "@/lib/i18n";
 import type { StorageActions } from "@/hooks/useStorage";
 import type { TimerMode } from "@/lib/types";
@@ -23,10 +23,11 @@ export default function TimerTab({ storage, onModeChange }: TimerTabProps) {
   const lang = settings.language;
 
   const { requestPermission, sendNotification, playSound } = useNotification();
+  const [goalAchieved, setGoalAchieved] = useState(false);
 
   const handleComplete = useCallback(
     (completedMode: TimerMode, newCount: number) => {
-      if (settings.sound) playSound(completedMode === "work" ? "work" : "break");
+      playSound(completedMode === "work" ? "work" : "break");
       if (settings.notification) {
         const msg = completedMode === "work" ? t(lang, "workComplete") : t(lang, "breakComplete");
         sendNotification(t(lang, "appName"), msg);
@@ -34,15 +35,21 @@ export default function TimerTab({ storage, onModeChange }: TimerTabProps) {
       if (completedMode === "work") {
         const newSessions = recordPomodoro(sessions, currentTask);
         addSession(newSessions);
-        updateTask({ actualPomodoros: currentTask.actualPomodoros + 1 });
-        const newTotal = gamification.totalPomodoros + 1;
-        const levelInfo = getLevelInfo(newTotal);
-        const unlocked = getUnlockedTitles(newTotal);
+        const newActual = Math.min(currentTask.actualPomodoros + 1, currentTask.estimatedPomodoros);
+        updateTask({ actualPomodoros: newActual });
+        if (newActual >= currentTask.estimatedPomodoros) {
+          setGoalAchieved(true);
+        }
+        const newPomodoros = gamification.totalPomodoros + 1;
+        const newMinutes = gamification.totalMinutes + settings.workDuration;
+        const beltInfo = getBeltInfo(newMinutes);
+        const unlocked = BELTS.filter((b) => newMinutes >= b.minMinutes).map((b) => b.belt);
         updateGamification({
-          totalPomodoros: newTotal,
-          level: levelInfo.level,
-          currentTitle: lang === "ja" ? levelInfo.title : levelInfo.titleEn,
-          unlockedTitles: unlocked.map((u) => u.title),
+          totalPomodoros: newPomodoros,
+          totalMinutes: newMinutes,
+          level: beltInfo.rank,
+          currentTitle: lang === "ja" ? beltInfo.belt : beltInfo.beltEn,
+          unlockedTitles: unlocked,
         });
       }
       void newCount;
@@ -92,6 +99,21 @@ export default function TimerTab({ storage, onModeChange }: TimerTabProps) {
         </div>
       </div>
 
+      {/* Goal achieved banner */}
+      {goalAchieved && (
+        <button
+          onClick={() => setGoalAchieved(false)}
+          className="mx-6 mb-2 bg-yellow-400/20 border border-yellow-300/40 rounded-2xl px-4 py-3 text-center w-auto"
+        >
+          <p className="text-yellow-200 font-bold text-sm">
+            {lang === "ja" ? "目標達成！お疲れ様でした🎉" : "Goal complete! Great work!"}
+          </p>
+          <p className="text-yellow-200/60 text-xs mt-0.5">
+            {lang === "ja" ? "タップして閉じる" : "Tap to dismiss"}
+          </p>
+        </button>
+      )}
+
       {/* Timer ring */}
       <TimerDisplay
         timeLeft={timer.timeLeft}
@@ -105,7 +127,10 @@ export default function TimerTab({ storage, onModeChange }: TimerTabProps) {
         actualPomodoros={currentTask.actualPomodoros}
         lang={lang}
         disabled={timer.isRunning || timer.pendingBreak}
-        onNameChange={(name) => updateTask({ name, actualPomodoros: 0 })}
+        onNameChange={(name) => {
+          updateTask({ name, actualPomodoros: 0 });
+          setGoalAchieved(false);
+        }}
         onEstimateChange={(n) => updateTask({ estimatedPomodoros: n })}
       />
 
@@ -142,6 +167,7 @@ export default function TimerTab({ storage, onModeChange }: TimerTabProps) {
             onPause={timer.pause}
             onReset={timer.reset}
             onExtend={timer.extend}
+            onSkip={timer.skip}
           />
         </div>
       )}

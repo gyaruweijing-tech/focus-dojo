@@ -1,6 +1,8 @@
 "use client";
 
+import { useRef } from "react";
 import { t } from "@/lib/i18n";
+import { exportData } from "@/lib/storage";
 import type { StorageActions } from "@/hooks/useStorage";
 
 const PRESETS = [
@@ -31,7 +33,7 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
 function NumberInput({
   value,
   onChange,
-  min = 1,
+  min = 5,
   max = 120,
 }: {
   value: number;
@@ -59,9 +61,26 @@ function NumberInput({
 }
 
 export default function SettingsTab({ storage }: SettingsTabProps) {
-  const { data, updateSettings } = storage;
+  const { data, updateSettings, importAll } = storage;
   const { settings } = data;
   const lang = settings.language;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        importAll(ev.target?.result as string);
+        alert(lang === "ja" ? "インポート完了しました" : "Import successful");
+      } catch {
+        alert(lang === "ja" ? "ファイルが正しくありません" : "Invalid file");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
 
   return (
     <div className="px-6 pt-6 pb-4 space-y-5 text-white">
@@ -154,7 +173,6 @@ export default function SettingsTab({ storage }: SettingsTabProps) {
       <div className="bg-white/10 rounded-2xl p-4 space-y-4">
         {(
           [
-            { key: "sound", label: t(lang, "sound") },
             { key: "notification", label: t(lang, "notification") },
           ] as const
         ).map(({ key, label }) => (
@@ -166,6 +184,31 @@ export default function SettingsTab({ storage }: SettingsTabProps) {
             />
           </div>
         ))}
+      </div>
+
+      {/* Backup */}
+      <div className="bg-white/10 rounded-2xl p-4 space-y-3">
+        <div className="text-white/50 text-xs">{lang === "ja" ? "データのバックアップ" : "Data Backup"}</div>
+        <div className="flex gap-2">
+          <button
+            onClick={exportData}
+            className="flex-1 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-all"
+          >
+            {lang === "ja" ? "書き出す" : "Export"}
+          </button>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="flex-1 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-all"
+          >
+            {lang === "ja" ? "読み込む" : "Import"}
+          </button>
+        </div>
+        <p className="text-white/30 text-xs">
+          {lang === "ja"
+            ? "記録やレベルをファイルに保存・復元できます。機種変更時にご利用ください。"
+            : "Save and restore your data. Useful when switching devices."}
+        </p>
+        <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
       </div>
     </div>
   );

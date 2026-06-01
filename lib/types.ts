@@ -25,6 +25,7 @@ export interface DayRecord {
 
 export interface Gamification {
   totalPomodoros: number;
+  totalMinutes: number;
   level: number;
   unlockedTitles: string[];
   currentTitle: string;

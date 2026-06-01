@@ -12,6 +12,7 @@ interface TimerControlsProps {
   onPause: () => void;
   onReset: () => void;
   onExtend: (minutes: number) => void;
+  onSkip: () => void;
 }
 
 export default function TimerControls({
@@ -22,6 +23,7 @@ export default function TimerControls({
   onPause,
   onReset,
   onExtend,
+  onSkip,
 }: TimerControlsProps) {
   return (
     <div className="px-6 space-y-4">
@@ -41,8 +43,13 @@ export default function TimerControls({
           {isRunning ? t(lang, "pause") : t(lang, "start")}
         </button>
 
-        {/* spacer to keep play button centered */}
-        <div className="w-12 h-12" />
+        <button
+          onClick={onSkip}
+          className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-lg transition-all active:scale-95"
+          aria-label={t(lang, "skip")}
+        >
+          ⏭
+        </button>
       </div>
 
       {/* Extend buttons — only shown when in work mode and running */}

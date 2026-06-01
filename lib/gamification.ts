@@ -1,45 +1,48 @@
-export interface TitleInfo {
-  level: number;
-  title: string;
-  titleEn: string;
-  minPomodoros: number;
+export interface BeltInfo {
+  rank: number;
+  belt: string;
+  beltEn: string;
+  color: string;
+  minMinutes: number;
 }
 
-export const TITLES: TitleInfo[] = [
-  { level: 1, title: "道場入門", titleEn: "Beginner", minPomodoros: 0 },
-  { level: 2, title: "集中の芽", titleEn: "Focus Sprout", minPomodoros: 10 },
-  { level: 3, title: "修行者", titleEn: "Practitioner", minPomodoros: 25 },
-  { level: 4, title: "道場の影", titleEn: "Dojo Shadow", minPomodoros: 50 },
-  { level: 5, title: "集中の士", titleEn: "Focus Warrior", minPomodoros: 100 },
-  { level: 6, title: "道場破り", titleEn: "Dojo Breaker", minPomodoros: 200 },
-  { level: 7, title: "抽象化の達人", titleEn: "Abstraction Master", minPomodoros: 400 },
-  { level: 8, title: "APIマスター", titleEn: "API Master", minPomodoros: 700 },
-  { level: 9, title: "道場主", titleEn: "Dojo Master", minPomodoros: 1000 },
+export const BELTS: BeltInfo[] = [
+  { rank: 1, belt: "白帯",  beltEn: "White Belt",  color: "#f0f0f0", minMinutes: 0      },
+  { rank: 2, belt: "黄帯",  beltEn: "Yellow Belt", color: "#f5c842", minMinutes: 300    },
+  { rank: 3, belt: "橙帯",  beltEn: "Orange Belt", color: "#f5803e", minMinutes: 900    },
+  { rank: 4, belt: "青帯",  beltEn: "Blue Belt",   color: "#4a90d9", minMinutes: 1800   },
+  { rank: 5, belt: "緑帯",  beltEn: "Green Belt",  color: "#4caf50", minMinutes: 3600   },
+  { rank: 6, belt: "紫帯",  beltEn: "Purple Belt", color: "#9c27b0", minMinutes: 7200   },
+  { rank: 7, belt: "茶帯",  beltEn: "Brown Belt",  color: "#795548", minMinutes: 12000  },
+  { rank: 8, belt: "黒帯",  beltEn: "Black Belt",  color: "#212121", minMinutes: 21000  },
+  { rank: 9, belt: "師範",  beltEn: "Shihan",      color: "#ffd700", minMinutes: 36000  },
 ];
 
-export function getLevelInfo(totalPomodoros: number): TitleInfo {
-  let current = TITLES[0];
-  for (const t of TITLES) {
-    if (totalPomodoros >= t.minPomodoros) current = t;
+export function getBeltInfo(totalMinutes: number): BeltInfo {
+  let current = BELTS[0];
+  for (const b of BELTS) {
+    if (totalMinutes >= b.minMinutes) current = b;
   }
   return current;
 }
 
-export function getNextLevelInfo(totalPomodoros: number): TitleInfo | null {
-  const current = getLevelInfo(totalPomodoros);
-  const idx = TITLES.findIndex((t) => t.level === current.level);
-  return idx < TITLES.length - 1 ? TITLES[idx + 1] : null;
+export function getNextBeltInfo(totalMinutes: number): BeltInfo | null {
+  const current = getBeltInfo(totalMinutes);
+  const idx = BELTS.findIndex((b) => b.rank === current.rank);
+  return idx < BELTS.length - 1 ? BELTS[idx + 1] : null;
 }
 
-export function getExpProgress(totalPomodoros: number): number {
-  const current = getLevelInfo(totalPomodoros);
-  const next = getNextLevelInfo(totalPomodoros);
+export function getBeltProgress(totalMinutes: number): number {
+  const current = getBeltInfo(totalMinutes);
+  const next = getNextBeltInfo(totalMinutes);
   if (!next) return 100;
-  const range = next.minPomodoros - current.minPomodoros;
-  const progress = totalPomodoros - current.minPomodoros;
+  const range = next.minMinutes - current.minMinutes;
+  const progress = totalMinutes - current.minMinutes;
   return Math.floor((progress / range) * 100);
 }
 
-export function getUnlockedTitles(totalPomodoros: number): TitleInfo[] {
-  return TITLES.filter((t) => totalPomodoros >= t.minPomodoros);
+export function minutesToHours(minutes: number): string {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m === 0 ? `${h}h` : `${h}h ${m}m`;
 }

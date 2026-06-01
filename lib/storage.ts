@@ -18,12 +18,13 @@ const DEFAULT_TASK: Task = {
 
 const DEFAULT_GAMIFICATION: Gamification = {
   totalPomodoros: 0,
+  totalMinutes: 0,
   level: 1,
-  unlockedTitles: ["道場入門"],
-  currentTitle: "道場入門",
+  unlockedTitles: ["白帯"],
+  currentTitle: "白帯",
 };
 
-function getDefaultData(): AppData {
+export function getDefaultData(): AppData {
   return {
     settings: DEFAULT_SETTINGS,
     currentTask: DEFAULT_TASK,
@@ -38,10 +39,12 @@ export function loadData(): AppData {
     const raw = localStorage.getItem("focus-dojo");
     if (!raw) return getDefaultData();
     const parsed = JSON.parse(raw);
+    const defaults = getDefaultData();
     return {
-      ...getDefaultData(),
+      ...defaults,
       ...parsed,
       settings: { ...DEFAULT_SETTINGS, ...parsed.settings },
+      gamification: { ...defaults.gamification, ...parsed.gamification },
     };
   } catch {
     return getDefaultData();
@@ -97,6 +100,30 @@ export function recordPomodoro(sessions: DayRecord[], task: Task): DayRecord[] {
 
   const newTasks = task.name ? [{ ...task, actualPomodoros: 1 }] : [];
   return [...sessions, { date: today, pomodoros: 1, tasks: newTasks }];
+}
+
+export function exportData(): void {
+  if (typeof window === "undefined") return;
+  const data = loadData();
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `focus-dojo-backup-${getTodayKey()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export function importData(json: string): AppData {
+  const parsed = JSON.parse(json);
+  const merged: AppData = {
+    ...getDefaultData(),
+    ...parsed,
+    settings: { ...DEFAULT_SETTINGS, ...parsed.settings },
+  };
+  localStorage.setItem("focus-dojo", JSON.stringify(merged));
+  return merged;
 }
 
 export function getLast7Days(sessions: DayRecord[]): { date: string; label: string; pomodoros: number }[] {

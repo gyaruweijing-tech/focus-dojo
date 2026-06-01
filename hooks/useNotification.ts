@@ -27,33 +27,45 @@ export function useNotification() {
     }
   }, []);
 
+  const playTone = useCallback(
+    (ctx: AudioContext, freq: number, startTime: number, duration: number, volume = 0.4) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.setValueAtTime(freq, startTime);
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(volume, startTime + 0.02);
+      gain.gain.setValueAtTime(volume, startTime + duration - 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    },
+    []
+  );
+
   const playSound = useCallback(
     (type: "work" | "break") => {
       try {
         const ctx = getAudioCtx();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
+        const t = ctx.currentTime;
 
         if (type === "work") {
-          osc.frequency.setValueAtTime(880, ctx.currentTime);
-          osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.15);
+          // 集中終了：3音チャイム（ド・ミ・ソ）
+          playTone(ctx, 523, t,        0.4);
+          playTone(ctx, 659, t + 0.35, 0.4);
+          playTone(ctx, 784, t + 0.70, 0.6);
         } else {
-          osc.frequency.setValueAtTime(440, ctx.currentTime);
-          osc.frequency.setValueAtTime(550, ctx.currentTime + 0.2);
+          // 休憩終了：2音（ソ・ド）
+          playTone(ctx, 784, t,        0.4);
+          playTone(ctx, 523, t + 0.35, 0.6);
         }
-
-        gain.gain.setValueAtTime(0.25, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
-
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.6);
       } catch {
         // Audio unavailable
       }
     },
-    [getAudioCtx]
+    [getAudioCtx, playTone]
   );
 
   return { requestPermission, sendNotification, playSound };

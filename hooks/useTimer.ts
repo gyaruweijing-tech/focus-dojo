@@ -23,6 +23,7 @@ export interface UseTimerReturn {
   extend: (minutes: number) => void;
   confirmBreak: () => void;
   extendWorkFromCompletion: (minutes: number) => void;
+  skip: () => void;
 }
 
 function getDuration(mode: TimerMode, config: TimerConfig): number {
@@ -170,6 +171,20 @@ export function useTimer(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config.workDuration, config.shortBreakDuration, config.longBreakDuration]);
 
+  // Skip current session: stop timer and advance to next mode without recording completion
+  const skip = useCallback(() => {
+    clearTimer();
+    setIsRunning(false);
+    setPendingBreak(false);
+    startTimeRef.current = null;
+    const nm = nextMode(modeRef.current, completedRef.current, configRef.current.longBreakInterval);
+    const duration = getDuration(nm, configRef.current);
+    modeRef.current = nm;
+    remainingRef.current = duration;
+    setMode(nm);
+    setTimeLeft(duration);
+  }, [clearTimer]);
+
   useEffect(() => () => clearTimer(), [clearTimer]);
 
   return {
@@ -185,5 +200,6 @@ export function useTimer(
     extend,
     confirmBreak,
     extendWorkFromCompletion,
+    skip,
   };
 }

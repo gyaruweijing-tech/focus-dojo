@@ -29,12 +29,18 @@ export default function Home() {
     <div className={`h-full transition-colors duration-700 ${bgClass}`}>
       <main className="h-full flex flex-col max-w-md mx-auto">
         <div className="flex-1 overflow-y-auto pb-16">
-          {activeTab === "timer" && (
+          <div className={activeTab === "timer" ? "" : "hidden"}>
             <TimerTab storage={storage} onModeChange={setTimerMode} />
-          )}
-          {activeTab === "stats" && <StatsTab storage={storage} />}
-          {activeTab === "dojo" && <DojoTab storage={storage} />}
-          {activeTab === "settings" && <SettingsTab storage={storage} />}
+          </div>
+          <div className={activeTab === "stats" ? "" : "hidden"}>
+            <StatsTab storage={storage} />
+          </div>
+          <div className={activeTab === "dojo" ? "" : "hidden"}>
+            <DojoTab storage={storage} />
+          </div>
+          <div className={activeTab === "settings" ? "" : "hidden"}>
+            <SettingsTab storage={storage} />
+          </div>
         </div>
         <TabNav activeTab={activeTab} onTabChange={setActiveTab} lang={lang} />
       </main>
